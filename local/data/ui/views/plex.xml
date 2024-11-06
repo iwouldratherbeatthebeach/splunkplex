@@ -1,0 +1,93 @@
+<form version="1.1" theme="dark">
+  <label>plex2</label>
+  <fieldset submitButton="false">
+    <input type="time" token="ptime">
+      <label></label>
+      <default>
+        <earliest>-24h@h</earliest>
+        <latest>now</latest>
+      </default>
+    </input>
+  </fieldset>
+  <row>
+    <panel>
+      <table>
+        <title>Currently Active Users</title>
+        <search>
+          <query>index=media sourcetype="tautulli:sessions" earliest=-2min@min
+| stats count by user
+| fields - count</query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+      </table>
+    </panel>
+    <panel>
+      <chart>
+        <title>Objects Accessed</title>
+        <search>
+          <query>index=media sourcetype="tautulli:sessions"
+| timechart dc(object)</query>
+          <earliest>$ptime.earliest$</earliest>
+          <latest>$ptime.latest$</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <table>
+        <title>User Activity</title>
+        <search>
+          <query>index=media sourcetype="tautulli:sessions"
+| stats values(object) as "Media" dc(object) as "Unique Items" by user</query>
+          <earliest>$ptime.earliest$</earliest>
+          <latest>$ptime.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+    <panel>
+      <table>
+        <title>Most Watched Items</title>
+        <search>
+          <query>index=media sourcetype="tautulli:sessions" user=*
+| stats earliest(_time) as etime latest(_time) as ltime by object user
+| eval ttime = ltime - etime
+| stats sum(ttime) as total_watch_time by object
+| eval ttm = round(total_watch_time/60, 2)
+| eval ttm = ttm + " Minutes"
+| table object, ttm
+| sort - ttm
+| rename ttm as "Total Watch Time"</query>
+          <earliest>$ptime.earliest$</earliest>
+          <latest>$ptime.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+      <table>
+        <title>Active User Stats</title>
+        <search>
+          <query>index=media sourcetype="tautulli:sessions" user=*
+| stats earliest(_time) as etime latest(_time) as ltime by object user
+| eval ttime = ltime - etime
+| stats sum(ttime) as total_watch_time by user
+| eval ttm = round(total_watch_time/60, 2)
+| eval ttm = ttm + " Minutes"
+| table user, ttm
+| sort - ttm
+| rename ttm as "Total Watch Time"</query>
+          <earliest>$ptime.earliest$</earliest>
+          <latest>$ptime.latest$</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="refresh.display">progressbar</option>
+      </table>
+    </panel>
+  </row>
+</form>
